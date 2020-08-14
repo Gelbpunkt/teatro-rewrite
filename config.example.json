@@ -109,10 +109,13 @@
                 "host": "127.0.0.1",
                 "port": 6379
             }
+        },
+        {
+            "name": "DmUser",
+            "dependencies": [],
+            "config": {
+                "token": "discord-token-here"
+            }
         }
-    ],
-    //custom_config: custom configuration for users. This object can be get by the app().getCustomConfig() method.
-    "custom_config": {
-        "token": "discord-token-here"
-    }
+    ]
 }
