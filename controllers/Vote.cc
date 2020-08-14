@@ -3,6 +3,7 @@
 #include <fmt/core.h>
 #include <json/json.h>
 #include <plugins/Redis.h>
+#include <random>
 #include <stdlib.h>
 
 void Vote::asyncHandleHttpRequest(
@@ -29,7 +30,10 @@ void Vote::asyncHandleHttpRequest(
     return;
   }
 
-  auto secret = rand() % 10000;
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_int_distribution<> distr(0, 10000);
+  auto secret = distr(gen);
 
   std::string rarity;
   if (secret <= 10) {
@@ -49,9 +53,9 @@ void Vote::asyncHandleHttpRequest(
   // Get a DB connection and run the query, not waiting for the result
   auto clientPtr = drogon::app().getFastDbClient();
   clientPtr->execSqlAsyncFuture(
-      fmt::format(
-          "UPDATE profile SET \"crates_{}\"=\"crates_{}\"+1 WHERE \"user\"=$1;",
-          rarity, rarity),
+      fmt::format("UPDATE profile SET \"crates_{0}\"=\"crates_{0}\"+1 WHERE "
+                  "\"user\"=$1;",
+                  rarity),
       userId);
 
   // Get the Redis instance
@@ -84,6 +88,36 @@ void Vote::asyncHandleHttpRequest(
   });
 
   redisClientPtr->client.commit();
+
+  auto config = app().getCustomConfig();
+
+  auto client = HttpClient::newHttpClient("https://discord.com");
+  auto httpReq = HttpRequest::newHttpRequest();
+  httpReq->setMethod(Post);
+  httpReq->setPath("/api/v7/users/@me/channels");
+  httpReq->setContentTypeCode(CT_APPLICATION_JSON);
+  httpReq->setBody(fmt::format("{{\"recipient_id\": \"{}\"}}", userId));
+  httpReq->addHeader("Authorization",
+                     fmt::format("Bot {}", config["token"].asString()));
+  httpReq->addHeader("User-Agent", "DiscordVoteHandlerC++ (0.1.0) IdleRPG");
+  client->sendRequest(
+      httpReq, [client, rarity, config](ReqResult result,
+                                        const HttpResponsePtr &response) {
+        auto body = *response->getJsonObject();
+        std::string channelId = body["id"].asString();
+
+        auto req = HttpRequest::newHttpRequest();
+        req->setMethod(Post);
+        req->setPath(fmt::format("/api/v7/channels/{}/messages", channelId));
+        req->setContentTypeCode(CT_APPLICATION_JSON);
+        req->setBody(fmt::format("{{\"content\":\"Thank you for the upvote! "
+                                 "You received a {} crate!\"}}",
+                                 rarity));
+        req->addHeader("Authorization",
+                       fmt::format("Bot {}", config["token"].asString()));
+        req->addHeader("User-Agent", "DiscordVoteHandlerC++ (0.1.0) IdleRPG");
+        client->sendRequest(req);
+      });
 
   auto resp = HttpResponse::newHttpResponse();
   resp->setStatusCode(k200OK);
