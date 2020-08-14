@@ -14,6 +14,11 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
+# Uncomment for static linking
+# SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+# SET(BUILD_SHARED_LIBS OFF)
+# SET(CMAKE_EXE_LINKER_FLAGS "-static")
+
 add_executable(${PROJECT_NAME} main.cc)
 
 ##########
@@ -22,8 +27,9 @@ add_executable(${PROJECT_NAME} main.cc)
 # target_link_libraries(${PROJECT_NAME} PRIVATE drogon)
 ##########
 
+find_package(fmt)
 find_package(Drogon CONFIG REQUIRED)
-target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon)
+target_link_libraries(${PROJECT_NAME} PRIVATE Drogon::Drogon fmt::fmt cpp_redis tacopie)
 
 if(CMAKE_CXX_STANDARD LESS 17)
 #With C++14, use boost to support any and string_view
