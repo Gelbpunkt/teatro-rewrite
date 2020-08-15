@@ -20,4 +20,4 @@ upload:
   script:
     - podman build --runtime crun --storage-driver vfs --format docker --squash -t gelbpunkt/teatro-rewrite:latest .
     - podman login --storage-driver vfs docker.io --username $DOCKERHUB_USERNAME --password $DOCKERHUB_PASSWORD
-    - podman push gelbpunkt/teatro-rewrite:latest docker.io/gelbpunkt/teatro-rewrite:latest
+    - podman push --storage-driver vfs gelbpunkt/teatro-rewrite:latest docker.io/gelbpunkt/teatro-rewrite:latest
