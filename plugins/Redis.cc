@@ -37,7 +37,7 @@ void Redis::updateUserCache(std::string rarity, unsigned long userId) {
     std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
     reader->parse(value.c_str(), value.c_str() + value.length(), &root, &err);
     auto key = fmt::format("crates_{}", rarity);
-    LOG_INFO << fmt::format("{}", root);
+    std::cout << root << std::endl;
     // It is parsed into "root"
     root[key] = root[key].asInt64() + 1;
     // Write it back to a string
@@ -45,6 +45,7 @@ void Redis::updateUserCache(std::string rarity, unsigned long userId) {
     writeBuilder.settings_["indentation"] = "";
     std::string jsonFile = Json::writeString(writeBuilder, root);
     LOG_INFO << "setting value";
+    std::cout << jsonFile << std::endl;
     this->client.set(redisKey, jsonFile);
     LOG_INFO << "committing";
     this->commit();
