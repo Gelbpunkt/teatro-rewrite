@@ -23,9 +23,11 @@ void Redis::setUserTimer(unsigned long userId) {
 
 void Redis::updateUserCache(std::string rarity, unsigned long userId) {
   auto redisKey = fmt::format("profilecache:{}", userId);
+  LOG_INFO << fmt::format("checking {}", redisKey);
   // Get the cache value
   this->client.get(redisKey, [this, redisKey, rarity](cpp_redis::reply &reply) {
     auto value = reply.as_string();
+    LOG_INFO << fmt::format("got redis result: {}", value);
     if (value == "")
       return;
     Json::Value root;
@@ -35,13 +37,16 @@ void Redis::updateUserCache(std::string rarity, unsigned long userId) {
     std::unique_ptr<Json::CharReader> reader(builder.newCharReader());
     reader->parse(value.c_str(), value.c_str() + value.length(), &root, &err);
     auto key = fmt::format("crates_{}", rarity);
+    LOG_INFO << fmt::format("{}", root);
     // It is parsed into "root"
     root[key] = root[key].asInt64() + 1;
     // Write it back to a string
     Json::StreamWriterBuilder writeBuilder;
     writeBuilder.settings_["indentation"] = "";
     std::string jsonFile = Json::writeString(writeBuilder, root);
+    LOG_INFO << "setting value";
     this->client.set(redisKey, jsonFile);
+    LOG_INFO << "committing";
     this->commit();
   });
 }
