@@ -14,11 +14,6 @@ endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-# Uncomment for static linking
-# SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
-# SET(BUILD_SHARED_LIBS OFF)
-# SET(CMAKE_EXE_LINKER_FLAGS "-static")
-
 add_executable(${PROJECT_NAME} main.cc)
 
 ##########
